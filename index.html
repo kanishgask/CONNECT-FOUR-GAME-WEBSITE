@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> GRID LOCK FOUR </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #171717;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        h1 {
+            color: #d4080f;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(7, 60px);
+            gap: 5px;
+            background-color: #e41ee1;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .cell.player1 {
+            background-color: #ff4500;
+        }
+
+        .cell.player2 {
+            background-color: #ffd700;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #0833c1;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .button:hover {
+            background-color: #000ba3;
+        }
+
+        .winner {
+            font-size: 20px;
+            margin-top: 20px;
+            color: #24ce09;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <h1>Connect 4</h1>
+        <div id="board" class="board"></div>
+        <div class="controls">
+            <button id="restart" class="button">Restart Game</button>
+        </div>
+        <div id="winner" class="winner"></div>
+    </div>
+
+    <script>
+        const ROWS = 6;
+        const COLS = 7;
+        let currentPlayer = 1;
+        const boardState = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+        const board = document.getElementById('board');
+        const winnerDisplay = document.getElementById('winner');
+
+        function createBoard() {
+            board.innerHTML = '';
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function dropPiece(col) {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (boardState[row][col] === 0) {
+                    boardState[row][col] = currentPlayer;
+                    updateBoard();
+                    checkWinner(row, col);
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    return;
+                }
+            }
+            alert('Column is full!');
+        }
+
+        function updateBoard() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+                    cell.classList.remove('player1', 'player2');
+                    if (boardState[row][col] === 1) {
+                        cell.classList.add('player1');
+                    } else if (boardState[row][col] === 2) {
+                        cell.classList.add('player2');
+                    }
+                }
+            }
+        }
+
+        function checkWinner(row, col) {
+            if (
+                checkDirection(row, col, 1, 0) || // Horizontal
+                checkDirection(row, col, 0, 1) || // Vertical
+                checkDirection(row, col, 1, 1) || // Diagonal (∕)
+                checkDirection(row, col, 1, -1)   // Diagonal (/)
+            ) {
+                winnerDisplay.textContent = `Player ${currentPlayer} wins!`;
+                board.removeEventListener('click', handleBoardClick);
+            }
+        }
+
+        function checkDirection(row, col, dRow, dCol) {
+            let count = 1;
+            count += countConsecutive(row, col, dRow, dCol);
+            count += countConsecutive(row, col, -dRow, -dCol);
+            return count >= 4;
+        }
+
+        function countConsecutive(row, col, dRow, dCol) {
+            let count = 0;
+            let player = boardState[row][col];
+            let r = row + dRow;
+            let c = col + dCol;
+            while (r >= 0 && r < ROWS && c >= 0 && c < COLS && boardState[r][c] === player) {
+                count++;
+                r += dRow;
+                c += dCol;
+            }
+            return count;
+        }
+
+        function handleBoardClick(event) {
+            const col = event.target.dataset.col;
+            if (col !== undefined) {
+                dropPiece(parseInt(col));
+            }
+        }
+
+        document.getElementById('restart').addEventListener('click', () => {
+            currentPlayer = 1;
+            boardState.forEach(row => row.fill(0));
+            winnerDisplay.textContent = '';
+            createBoard();
+            board.addEventListener('click', handleBoardClick);
+        });
+
+        createBoard();
+        board.addEventListener('click', handleBoardClick);
+    </script>
+</body>
+
+</html>
